@@ -1,15 +1,15 @@
 import streamlit as st
 import speech_recognition as sr
 from groq import Groq
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
 # Load API key securely
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 if not GROQ_API_KEY:
-    st.error("🚨 API Key is missing! Set it in Streamlit Secrets or a .env file.")
+    st.error("🚨 API Key is missing! Set it in .env file or Streamlit secrets.")
     st.stop()
 
 # Streamlit UI
@@ -17,22 +17,22 @@ st.set_page_config(page_title="🎙️ Arabic to English Voice Translator", page
 st.title("🎙️ Arabic to English Voice Translator")
 st.markdown("Press the button to speak Arabic. Your speech will be translated to English using AI.")
 
-# Create Groq Client
+# GROQ client
 client = Groq(api_key=GROQ_API_KEY)
 
-# Microphone button
-if st.button("🎤 Start Listening (Speak Arabic Now)"):
+# Start recording on button click
+if st.button("🎤 Start Listening (Speak Arabic)"):
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
-        st.info("🎧 Listening... Speak now")
+        st.info("🎧 Listening... Please speak Arabic.")
         audio = recognizer.listen(source, timeout=5, phrase_time_limit=10)
 
     try:
-        # Transcribe Arabic speech to text
+        # Recognize Arabic
         arabic_text = recognizer.recognize_google(audio, language="ar")
-        st.success(f"🗣️ Detected Arabic: {arabic_text}")
+        st.success(f"🗣️ Arabic Detected: {arabic_text}")
 
-        # Translate using GROQ LLM
+        # GROQ Translation
         prompt = f"Translate this Arabic sentence into English: {arabic_text}"
         response = client.chat.completions.create(
             messages=[
@@ -42,13 +42,13 @@ if st.button("🎤 Start Listening (Speak Arabic Now)"):
             model="llama3-8b-8192"
         )
 
-        translation = response.choices[0].message.content.strip()
+        english_translation = response.choices[0].message.content.strip()
         st.subheader("✅ English Translation:")
-        st.success(translation)
+        st.success(english_translation)
 
     except sr.UnknownValueError:
-        st.error("❌ Sorry, could not understand your speech.")
+        st.error("❌ Could not understand audio.")
     except sr.RequestError as e:
-        st.error(f"❌ Error from speech recognition service: {e}")
+        st.error(f"❌ Speech Recognition error: {e}")
     except Exception as e:
-        st.error(f"❌ Unexpected error: {e}")
+        st.error(f"❌ Error: {e}")
